@@ -1,6 +1,6 @@
 ---
 name: aphorism-notebook
-description: 为「思笺」箴言卡片站写新的箴言卡片并推送部署。当用户说「写一张卡片 / 今天来一张 / 更新箴言笔记 / 往 thinking 里加一条 / aphorism notebook / 给我一句箴言」时使用。它负责定位用户 GitHub 上的同名仓库（没有就新建），用多种思考模式（读新闻、回看当天会话与任务、追问一个从未想过的问题、观察生活即景、重读旧卡）进行多轮思考，把结论压成十来字的箴言，再写下它背后的旅程，最后校验并推送，触发 GitHub Pages 自动构建。
+description: 为「思笺」箴言卡片站写新的箴言卡片并推送部署。当用户说「写一张卡片 / 今天来一张 / 更新箴言笔记 / 往 thinking 里加一条 / aphorism notebook / 给我一句箴言」时使用。它负责定位用户 GitHub 上的同名仓库；如果还没有，就从上游 fork 一份并清空上游旧卡，用多种思考模式（读新闻、回看当天会话与任务、追问一个从未想过的问题、观察生活即景、重读旧卡）进行多轮思考，把结论压成十来字的箴言，再写下它背后的旅程，最后校验并推送，触发 GitHub Pages 自动构建。
 ---
 
 # 箴言笔记 · aphorism-notebook
@@ -42,18 +42,23 @@ description: 为「思笺」箴言卡片站写新的箴言卡片并推送部署�
 
 ## 2. 第 0 步：定位仓库
 
-目标仓库 = **用户自己 GitHub 账号下的同名仓库**（默认名 `Thinking`，若用户另有约定以此为准）。
+上游仓库 = 当前 skill 所在的项目，默认 `petterobam/Thinking`；目标仓库 = **用户自己 GitHub 账号下、该上游的 fork**（默认名 `Thinking`，若用户另有约定以此为准）。
 
 ```bash
-gh auth status                                    # 没有登录就先 gh auth login
-owner=$(gh api user --jq .login)
-gh repo view "$owner/Thinking" >/dev/null 2>&1 && echo exists || echo missing
+gh auth status                                      # 没有登录就先 gh auth login
+upstream="${APHORISM_UPSTREAM:-petterobam/Thinking}" # 上游仓库，必要时可覆盖
+repo_name="${upstream##*/}"
+owner="$(gh api user --jq .login)"
+target="$owner/$repo_name"
+gh repo view "$target" >/dev/null 2>&1 && echo exists || echo missing
 ```
 
-- **已在本仓库里**：`git pull --rebase` 后就地工作。
-- **仓库存在但本地没有**：`gh repo clone "$owner/Thinking" && cd Thinking`。
-- **仓库不存在**：`gh repo create Thinking --public --description "箴言卡片站" --clone && cd Thinking`，然后把站点骨架放进去（见 `references/02-repo-and-publishing.md` 的「从零建站」）。
+- **已在本仓库里**：确认 `origin` 指向自己的 fork；`git pull --rebase` 后就地工作。
+- **fork 存在但本地没有**：`gh repo clone "$target" && cd "$repo_name"`，并确保保留 `upstream` remote。
+- **fork 不存在**：**不要执行 `gh repo create`**。先 `gh repo fork "$upstream" --default-branch-only`，再使用/克隆自己的 fork；随后把 `content/cards/*.md` 全部移除，只保留空目录，更新 `content/site.json` 里的 `repo.owner/name`，提交一次初始化 commit 并推送。详见 `references/02-repo-and-publishing.md` 的「fork 初始化」。
 - **没有 gh / 未登录**：停下来，明确告诉用户需要 `gh auth login`，不要用假凭证或匿名方式绕。
+
+注意：初始化时删除的是 fork 的 HEAD，不重写上游历史；清卡只允许发生在第一次 fork 初始化，之后同步上游时绝不能删掉用户自己的卡片。
 
 细节与故障处理：`references/02-repo-and-publishing.md`。
 
@@ -138,7 +143,7 @@ node scripts/validate.mjs --strict
 git add content/cards/<slug>.md
 git commit -m "card: <slug> — <箴言>"
 git pull --rebase --autostash   # 远端有新提交时的保险
-git push
+git push origin main            # 推送到自己的 fork，不要推 upstream
 ```
 
 - 一次提交 = 一张（或同批的几张）卡片，不要混入无关改动。

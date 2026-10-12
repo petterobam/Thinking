@@ -37,7 +37,7 @@ git add -A && git commit -m "card: delete-needs-courage — 删除比添加更�
 curl -fsSL https://petterobam.github.io/Thinking/skill/install.sh | bash
 ```
 
-然后对一个 Agent 说：**「用箴言笔记给我写一张卡片」**。
+然后对一个 Agent 说：**「用箴言笔记给我写一张卡片」**。如果当前账号还没有自己的 `Thinking` 仓库，首次运行会从上游 fork 一份，并清空上游自带卡片，得到一个只属于你的空笔记本。
 
 skill 源码在 [`skill/aphorism-notebook/`](skill/aphorism-notebook/)：
 
@@ -46,7 +46,7 @@ skill 源码在 [`skill/aphorism-notebook/`](skill/aphorism-notebook/)：
 | `SKILL.md` | 主流程：定位仓库 → 选思考模式 → 多轮思考 → 压缩箴言 → 写旅程 → 校验 → 推送 |
 | `references/00-thinking-modes.md` | 五种思考模式（时事沉思 / 会话回望 / 悬问求索 / 生活即景 / 旧笺重读）的完整操作 |
 | `references/01-writing-craft.md` | 写作技巧：箴言骨架、删字练习、旅程节奏、正反例 |
-| `references/02-repo-and-publishing.md` | 仓库定位、从零建站、发布与故障处理 |
+| `references/02-repo-and-publishing.md` | 仓库定位、fork 初始化、发布与故障处理 |
 | `references/03-card-format.md` | 卡片字段规范与机器校验规则 |
 
 ## 目录结构

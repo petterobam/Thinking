@@ -105,7 +105,7 @@ cat <<'NEXT'
 
   「用箴言笔记给我写一张卡片」
 
-Agent 会读取 SKILL.md，定位你的 GitHub 同名仓库（没有就新建），
+Agent 会读取 SKILL.md，定位你的 GitHub 同名仓库（没有就从上游 fork 并清空上游旧卡），
 按其中一种思考模式思考多轮，写下箴言与旅程，校验后推送；
 GitHub Actions 会在提交后自动重新部署站点。
 

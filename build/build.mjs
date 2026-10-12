@@ -150,7 +150,7 @@ function agentPrompt(site, siteUrl) {
   return `请安装并使用「箴言笔记 / aphorism-notebook」skill，为我的箴言卡片站写一张新卡片：
 1) 先运行：curl -fsSL ${siteUrl}skill/install.sh | bash
 2) 读取安装好的 SKILL.md（~/.codex/skills/${site.skill?.name || 'aphorism-notebook'}/SKILL.md），严格按其中流程执行。
-3) 目标仓库：GitHub 账号 ${owner} 下的 ${repo} 仓库（不存在就用 gh 新建，公开仓库）。
+3) 目标仓库：GitHub 账号 ${owner} 下的 ${repo} 仓库；如果不存在，就用 gh 从上游 fork 一份，并移除上游已有的卡片。
 4) 思考完之后：写卡片 → node scripts/validate.mjs --strict → 提交推送。`;
 }
 
