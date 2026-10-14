@@ -1,0 +1,68 @@
+# 国内镜像 —— EdgeOne Makers（腾讯云）
+#
+# 为什么不是 Gitee Pages：Gitee 已于 2024-05 无公告下线 Gitee Pages，
+# 帮助中心文档、OpenAPI 的 pages 接口、仓库的 /pages 路由都已删除，
+# 连老站点（如 doocs/md）也已经停止更新。详见 README 的「国内镜像」一节。
+#
+# 仓库 Secret（Settings → Secrets and variables → Actions）：
+#   EDGEONE_API_TOKEN —— EdgeOne Makers 控制台创建的 API Token
+# 未配置时本工作流只做校验与构建，不会失败。
+name: Build the China mirror
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: cn-mirror
+  cancel-in-progress: true
+
+jobs:
+  mirror:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Validate cards (quality gate)
+        run: node scripts/validate.mjs --strict
+
+      - name: Read mirror config
+        id: cn
+        run: |
+          node -e '
+            const s = require("./content/site.json").mirror || {};
+            const out = [`project=${s.project || "thinking"}`, `url=${s.url || ""}`];
+            require("fs").appendFileSync(process.env.GITHUB_OUTPUT, out.join("\n") + "\n");
+          '
+
+      # 镜像站在域名根路径，所以 base 用 "/"；绝对链接（RSS/sitemap/安装脚本）
+      # 指向 mirror.url。两处都通过环境变量覆盖，不动站点源码。
+      - name: Build the mirror
+        env:
+          BASE_PATH: /
+          SITE_URL: ${{ steps.cn.outputs.url }}
+        run: node build/build.mjs --out=dist-cn
+
+      # 免费版永久免费，全球加速区（中国大陆以外节点）免备案。
+      # 首次部署会用 -n 指定的项目名自动建项目，并把访问地址打印在日志里；
+      # 把该地址填回 content/site.json 的 mirror.url 后再跑一次即可。
+      - name: Deploy to EdgeOne Makers
+        env:
+          EDGEONE_API_TOKEN: ${{ secrets.EDGEONE_API_TOKEN }}
+          PROJECT: ${{ steps.cn.outputs.project }}
+        run: |
+          if [ -z "$EDGEONE_API_TOKEN" ]; then
+            echo "::notice title=国内镜像未部署::未配置仓库 Secret EDGEONE_API_TOKEN，已跳过部署（构建正常）。配置方法见 README 的「国内镜像」一节。"
+            exit 0
+          fi
+          npx --yes edgeone@latest makers deploy ./dist-cn -n "$PROJECT" -t "$EDGEONE_API_TOKEN" -e production

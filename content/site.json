@@ -11,6 +11,11 @@
   },
   "accent": "#a32e27",
   "fontHref": "",
+  "mirror": {
+    "provider": "edgeone",
+    "project": "thinking",
+    "url": ""
+  },
   "skill": {
     "name": "aphorism-notebook",
     "displayName": "箴言笔记"
