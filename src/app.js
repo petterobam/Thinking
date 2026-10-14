@@ -198,23 +198,37 @@
     });
   }
 
-  // Re-fold whenever the space itself changes: window resizes, webfonts
-  // landing late, a scrollbar appearing. Observing .filters (whose width does
-  // not depend on the toggle) keeps this from oscillating.
+  // Re-fold only when the available width really changes: opening the row wraps
+  // it onto another line and so changes .filters' height — a ResizeObserver sees
+  // that too, and folding on it made the row flash open and snap shut. So the
+  // width is measured when the debounce fires, and pure height changes are
+  // ignored. Late load/font events re-fold as well, but never undo a row the
+  // reader just opened.
+  var lastWidth = null;
   var resizeTimer;
+
+  function filtersBox() { return chipRow.closest('.filters') || chipRow; }
+
   function refit() {
     clearTimeout(resizeTimer);
-    resizeTimer = setTimeout(fitChips, 120);
+    resizeTimer = setTimeout(function () {
+      var width = filtersBox().getBoundingClientRect().width;
+      var widthChanged = lastWidth === null || Math.abs(width - lastWidth) >= 0.5;
+      lastWidth = width;
+      if (!widthChanged) return;
+      fitChips();
+    }, 120);
+  }
+
+  function fitChipsIfClosed() {
+    if (!chipRow.classList.contains('is-open')) fitChips();
   }
 
   window.addEventListener('resize', refit);
   fitChips();
-  window.addEventListener('load', fitChips);
-  if (document.fonts && document.fonts.ready) document.fonts.ready.then(fitChips);
-  if (window.ResizeObserver && chipRow) {
-    var filters = chipRow.closest('.filters') || chipRow;
-    new ResizeObserver(refit).observe(filters);
-  }
+  window.addEventListener('load', fitChipsIfClosed);
+  if (document.fonts && document.fonts.ready) document.fonts.ready.then(fitChipsIfClosed);
+  if (window.ResizeObserver) new ResizeObserver(refit).observe(filtersBox());
 
   /* ---------- reading panel -------------------------------------------- */
   var overlay = $('#overlay');
